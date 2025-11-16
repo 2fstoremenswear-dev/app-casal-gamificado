@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Heart, Smile, Zap, MessageHeart, Flame } from 'lucide-react';
+import { ArrowLeft, Heart, Smile, Zap, Flame } from 'lucide-react';
 import type { CheckInDaily, CheckInWeekly } from '@/lib/types';
 
 export default function CheckInPage() {
@@ -145,7 +145,7 @@ export default function CheckInPage() {
                 onChange={(v) =>
                   setDailyAnswers({ ...dailyAnswers, conexao: v })
                 }
-                icon={MessageHeart}
+                icon={Heart}
                 label="Nível de conexão"
               />
 
