@@ -24,17 +24,23 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="pt-BR">
       <head>
-        <Script src="/lasy-bridge.js" strategy="beforeInteractive" />
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#ff5c8a" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta
+          name="apple-mobile-web-app-status-bar-style"
+          content="black-translucent"
+        />
+        <link rel="apple-touch-icon" href="/icon-512.png" />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body>
+        <RegisterSW />
         {children}
       </body>
     </html>
