@@ -228,7 +228,7 @@ export default function DashboardPage() {
         <Card className="p-6">
           <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
             <Target className="w-5 h-5 text-pink-600" />
-            Missões de Hoje (versão nova)
+            Missões de Hoje 
           </h3>
           {todayMissions.length === 0 ? (
             <p className="text-sm text-gray-600">
