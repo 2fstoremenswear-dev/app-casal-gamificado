@@ -23,6 +23,7 @@ import { LEVEL_NAMES, MISSIONS_DATABASE } from '@/lib/constants';
 
 export default function DashboardPage() {
   const router = useRouter();
+
   const profile = useAppStore((state) => state.profile);
   const stats = useAppStore((state) => state.stats);
   const deltaEmocional = useAppStore((state) => state.deltaEmocional);
@@ -34,43 +35,46 @@ export default function DashboardPage() {
   const [todayMissions, setTodayMissions] = useState<any[]>([]);
 
   useEffect(() => {
-    // Generate today's missions if none exist
     const today = new Date().toDateString();
+
+    // Missões já existentes para hoje
     const existingTodayMissions = missions.filter(
       (m) => new Date(m.date).toDateString() === today
     );
 
     if (existingTodayMissions.length === 0) {
-      // Generate 3 random missions
+      // Gera 3 missões aleatórias (respeitando modo sensual)
       const availableMissions = MISSIONS_DATABASE.filter(
         (m) => !m.sensualOnly || profile?.sensualMode
       );
-      const shuffled = [...availableMissions].sort(() => Math.random() - 0.5);
-      const selected = shuffled.slice(0, 3);
 
-      selected.forEach((mission) => {
-        addMission({
+      const shuffled = [...availableMissions].sort(() => Math.random() - 0.5);
+      const baseSelected = shuffled.slice(0, 3);
+
+      // Gera ID UMA vez só e usa o mesmo para store + state
+      const selectedWithMeta = baseSelected.map((mission) => {
+        const missionData = {
           ...mission,
-          id: `${mission.id}-${Date.now()}-${Math.random()}`,
+          id: `${mission.id}-${today}-${Math.random()}`,
           completed: false,
           date: new Date(),
-        });
+        };
+        // salva no store
+        addMission(missionData);
+        return missionData;
       });
 
-      setTodayMissions(
-        selected.map((m) => ({
-          ...m,
-          id: `${m.id}-${Date.now()}-${Math.random()}`,
-          completed: false,
-          date: new Date(),
-        }))
-      );
+      setTodayMissions(selectedWithMeta);
     } else {
       setTodayMissions(existingTodayMissions);
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // roda só na primeira carga
 
-  const xpProgress = (stats.xpAtual / stats.xpProximoNivel) * 100;
+  const xpProgress =
+    stats.xpProximoNivel > 0
+      ? Math.min(100, (stats.xpAtual / stats.xpProximoNivel) * 100)
+      : 0;
 
   const getDeltaColor = (value: number) => {
     if (value > 0) return 'text-green-600';
@@ -94,9 +98,13 @@ export default function DashboardPage() {
               <Heart className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="font-bold text-lg">{profile?.coupleName}</h1>
+              <h1 className="font-bold text-lg">
+                {profile?.coupleName || 'Casal'}
+              </h1>
               <p className="text-xs text-gray-500">
-                Juntos há {profile?.relationshipDuration}
+                {profile?.relationshipDuration
+                  ? `Juntos há ${profile.relationshipDuration}`
+                  : 'Complete o onboarding para personalizar'}
               </p>
             </div>
           </div>
@@ -122,7 +130,7 @@ export default function DashboardPage() {
                 <p className="text-sm opacity-90">Nível do Casal</p>
                 <h2 className="text-3xl font-bold">{stats.nivel}</h2>
                 <p className="text-xs opacity-75">
-                  {LEVEL_NAMES[stats.nivel - 1]}
+                  {LEVEL_NAMES[stats.nivel - 1] || 'Recomeço'}
                 </p>
               </div>
               <Sparkles className="w-12 h-12 opacity-80" />
@@ -170,7 +178,9 @@ export default function DashboardPage() {
                   {isPremium ? 'Ilimitado' : 'Desbloqueie'}
                 </h2>
                 <p className="text-xs opacity-75">
-                  {isPremium ? 'Todos os recursos' : 'Cresçam 3x mais rápido'}
+                  {isPremium
+                    ? 'Todos os recursos liberados'
+                    : 'Cresçam 3x mais rápido'}
                 </p>
               </div>
               {isPremium ? (
@@ -191,19 +201,19 @@ export default function DashboardPage() {
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {Object.entries(deltaEmocional).map(([key, value]) => {
-                const Icon = getDeltaIcon(value);
+                const Icon = getDeltaIcon(value as number);
                 return (
                   <div
                     key={key}
                     className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
                   >
-                    <Icon className={`w-5 h-5 ${getDeltaColor(value)}`} />
+                    <Icon className={`w-5 h-5 ${getDeltaColor(value as number)}`} />
                     <div>
                       <p className="text-xs text-gray-600 capitalize">
                         {key.replace(/([A-Z])/g, ' $1').trim()}
                       </p>
-                      <p className={`font-bold ${getDeltaColor(value)}`}>
-                        {value > 0 ? '+' : ''}
+                      <p className={`font-bold ${getDeltaColor(value as number)}`}>
+                        {Number(value) > 0 ? '+' : ''}
                         {value}
                       </p>
                     </div>
@@ -220,48 +230,54 @@ export default function DashboardPage() {
             <Target className="w-5 h-5 text-pink-600" />
             Missões de Hoje
           </h3>
-          <div className="space-y-3">
-            {todayMissions.map((mission) => (
-              <div
-                key={mission.id}
-                className={`p-4 rounded-xl border-2 transition-all ${
-                  mission.completed
-                    ? 'bg-green-50 border-green-200'
-                    : 'bg-white border-gray-200 hover:border-pink-300'
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  <button
-                    onClick={() => completeMission(mission.id)}
-                    disabled={mission.completed}
-                    className="mt-1"
-                  >
-                    {mission.completed ? (
-                      <CheckCircle2 className="w-6 h-6 text-green-600" />
-                    ) : (
-                      <Circle className="w-6 h-6 text-gray-400 hover:text-pink-500" />
-                    )}
-                  </button>
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-gray-800">
-                      {mission.title}
-                    </h4>
-                    <p className="text-sm text-gray-600">
-                      {mission.description}
-                    </p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded-full">
-                        +{mission.xp} XP
-                      </span>
-                      <span className="text-xs text-gray-500 capitalize">
-                        {mission.category}
-                      </span>
+          {todayMissions.length === 0 ? (
+            <p className="text-sm text-gray-600">
+              Nenhuma missão gerada ainda hoje.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {todayMissions.map((mission) => (
+                <div
+                  key={mission.id}
+                  className={`p-4 rounded-xl border-2 transition-all ${
+                    mission.completed
+                      ? 'bg-green-50 border-green-200'
+                      : 'bg-white border-gray-200 hover:border-pink-300'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <button
+                      onClick={() => !mission.completed && completeMission(mission.id)}
+                      disabled={mission.completed}
+                      className="mt-1"
+                    >
+                      {mission.completed ? (
+                        <CheckCircle2 className="w-6 h-6 text-green-600" />
+                      ) : (
+                        <Circle className="w-6 h-6 text-gray-400 hover:text-pink-500" />
+                      )}
+                    </button>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-800">
+                        {mission.title}
+                      </h4>
+                      <p className="text-sm text-gray-600">
+                        {mission.description}
+                      </p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded-full">
+                          +{mission.xp} XP
+                        </span>
+                        <span className="text-xs text-gray-500 capitalize">
+                          {mission.category}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
           <Button
             onClick={() => router.push('/missoes')}
             variant="outline"
@@ -305,4 +321,16 @@ export default function DashboardPage() {
       </div>
     </div>
   );
+}
+
+function getDeltaColor(value: number) {
+  if (value > 0) return 'text-green-600';
+  if (value < 0) return 'text-red-600';
+  return 'text-gray-600';
+}
+
+function getDeltaIcon(value: number) {
+  if (value > 0) return TrendingUp;
+  if (value < 0) return TrendingDown;
+  return Circle;
 }
