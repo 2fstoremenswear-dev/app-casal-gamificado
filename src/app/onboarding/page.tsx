@@ -1,5 +1,95 @@
 'use client';
 
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { useAppStore } from '@/lib/store';
+import { supabase } from '@/lib/supabaseClient';
+import { Heart, Sparkles, Target, Brain, ArrowRight } from 'lucide-react';
+
+export default function OnboardingPage() {
+  const router = useRouter();
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  const [formData, setFormData] = useState({
+    coupleName: '',
+    relationshipDuration: '',
+    photo: '',
+    sensualMode: false,
+  });
+
+  const setProfile = useAppStore((state) => state.setProfile);
+  const setHasCompletedOnboarding = useAppStore(
+    (state) => state.setHasCompletedOnboarding
+  );
+
+  const onboardingSteps = [
+    {
+      icon: Heart,
+      title: 'Resgate o que vocês tinham no início',
+      description:
+        'Lembra daquele frio na barriga? Das conversas sem fim? Do toque que arrepiava? Vamos trazer isso de volta.',
+      gradient: 'from-pink-500 to-rose-500',
+    },
+    {
+      icon: Target,
+      title: 'Entenda o que mudou',
+      description:
+        'A rotina chegou. O cansaço também. Mas o amor ainda está aqui. Vamos mapear esses pontos.',
+      gradient: 'from-purple-500 to-pink-500',
+    },
+    {
+      icon: Sparkles,
+      title: 'Se conectem através de missões e desafios',
+      description:
+        'Pequenos gestos diários que fortalecem o vínculo e reacendem o brilho de vocês.',
+      gradient: 'from-violet-500 to-purple-500',
+    },
+    {
+      icon: Brain,
+      title: 'Receba ajuda personalizada da IA',
+      description:
+        'Uma inteligência que entende vocês, sugere missões certas e ajuda nos momentos difíceis.',
+      gradient: 'from-indigo-500 to-violet-500',
+    },
+  ];
+
+  const [step, setStep] = useState(0);
+
+  // 🔐 Checa se tem usuário logado no Supabase
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getUser();
+
+      if (!data.user) {
+        // Não logado -> volta para o login
+        router.replace('/login');
+      } else {
+        setCheckingAuth(false);
+      }
+    };
+
+    checkAuth();
+  }, [router]);
+
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 via-purple-50 to-rose-50">
+        <p className="text-sm text-gray-600">Verificando sua sessão...</p>
+      </div>
+    );
+  }
+
+  // ... AQUI embaixo você mantém o restante do código que já existia:
+  // handleNext, JSX do formulário, etc.
+}
+
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
