@@ -2,7 +2,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
-import "../globals.css";
+import "./globals.css";
 import { RegisterSW } from "./RegisterSW";
 // Import all available fonts for AI usage
 import "../lib/fonts";
